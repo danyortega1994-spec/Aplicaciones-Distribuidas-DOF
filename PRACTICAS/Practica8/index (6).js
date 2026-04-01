@@ -5,7 +5,6 @@ const { MongoClient } = require("mongodb");
 
 const app = express();
 
-// ⚠️ CAMBIA TU PASSWORD AQUÍ
 const uri = "mongodb+srv://danyortega1994_db_user:FHbCmjIYq7899CtP@cluster0.ytf0yn7.mongodb.net/?appName=Cluster0";
 
 // Variables globales
@@ -17,7 +16,6 @@ let collection;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 🔥 CONEXIÓN SEGURA (NO SE CUELGA)
 async function connectDB() {
   try {
     client = new MongoClient(uri, {
@@ -26,14 +24,13 @@ async function connectDB() {
 
     await client.connect();
 
-    console.log("✅ Conectado a MongoDB");
+    console.log(" Conectado a MongoDB");
 
-    // 🔥 PRÁCTICA 8
     database = client.db("practica8");
     collection = database.collection("proyectos");
 
   } catch (error) {
-    console.error("❌ Error conectando a MongoDB:", error.message);
+    console.error("Error conectando a MongoDB:", error.message);
   }
 }
 
@@ -67,9 +64,9 @@ app.post("/serv003/:info", (req, res) => {
   });
 });
 
-// 🔥 INSERTAR PROYECTOS (YA NO SE CUELGA)
+// INSERTAR PROYECTOS (YA NO SE CUELGA)
 app.post("/receipt/insert", async (req, res) => {
-  console.log("📩 Petición recibida");
+  console.log("Petición recibida");
 
   try {
     const proyectos = req.body;
@@ -81,7 +78,6 @@ app.post("/receipt/insert", async (req, res) => {
       });
     }
 
-    // 🔥 SI NO HAY CONEXIÓN, RESPONDE
     if (!collection) {
       return res.status(500).json({
         error: "No hay conexión a MongoDB",
@@ -95,7 +91,7 @@ app.post("/receipt/insert", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Error en endpoint:", error);
+    console.error("Error en endpoint:", error);
 
     res.status(500).json({
       error: "Error al insertar",
@@ -106,7 +102,7 @@ app.post("/receipt/insert", async (req, res) => {
 
 // Iniciar servidor
 app.listen(3000, async () => {
-  console.log("🚀 Servidor corriendo en http://localhost:3000");
+  console.log("Servidor corriendo en http://localhost:3000");
 
   await connectDB();
 });
