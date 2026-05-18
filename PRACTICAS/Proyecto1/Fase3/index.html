@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login 2FA</title>
+</head>
+<body>
+
+<h2>Login</h2>
+
+<input id="usuario" placeholder="Usuario"><br><br>
+<input id="password" type="password" placeholder="Password"><br><br>
+<button onclick="login()">Login</button>
+
+<h2>PIN</h2>
+
+<input id="pin" placeholder="PIN"><br><br>
+<button onclick="validar()">Validar PIN</button>
+
+<p id="resultado"></p>
+
+<script>
+let usuarioGlobal = "";
+
+function login() {
+    const usuario = document.getElementById("usuario").value;
+    const password = document.getElementById("password").value;
+
+    usuarioGlobal = usuario;
+
+    fetch("/usuarios/valida-login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ usuario, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("resultado").innerText = data.msg;
+    });
+}
+
+function validar() {
+    const pin = document.getElementById("pin").value;
+
+    fetch("/usuarios/validar-pin", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ usuario: usuarioGlobal, pin })
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("resultado").innerText = data.msg;
+    });
+}
+</script>
+
+</body>
+</html>
