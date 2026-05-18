@@ -3,17 +3,17 @@ require("node:dns/promises").setServers(["1.1.1.1", "8.8.8.8"]);
 const { MongoClient } = require('mongodb');
 const crypto = require('crypto');
 
-//  PON TU URI
+// TU URI
 const uri = "mongodb+srv://danyortega1994_db_user:FHbCmjIYq7899CtP@cluster0.ytf0yn7.mongodb.net/?appName=Cluster0";
 
 const client = new MongoClient(uri);
 
-//  HASH SHA256
+// HASH SHA256
 function hashPassword(password) {
     return crypto.createHash('sha256').update(password).digest('hex');
 }
 
-//  5 USUARIOS
+// 5 USUARIOS
 const rawUsers = [
     { usuario: 'daniel@mail.com', password: '123456', name: 'Daniel' },
     { usuario: 'ana@mail.com', password: '654321', name: 'Ana' },
@@ -23,24 +23,34 @@ const rawUsers = [
 ];
 
 async function run() {
+
     try {
+
         await client.connect();
 
-        const db = client.db('practica10'); // nombre que usarás después
+        const db = client.db('practica10');
         const usuariosCol = db.collection('usuarios');
 
-        // LIMPIAR (opcional)
+        // LIMPIAR COLECCIÓN
         await usuariosCol.deleteMany({});
 
-        console.log(" Creando usuarios...");
+        console.log("Creando usuarios...");
 
         for (const user of rawUsers) {
 
             const nuevo = {
+
                 usuario: user.usuario,
+
                 password: hashPassword(user.password),
+
                 name: user.name,
+
+                // 
+                telegramChatId: "8389446341",
+
                 deleted: false,
+
                 created: new Date()
             };
 
@@ -49,11 +59,14 @@ async function run() {
             console.log(`Usuario '${user.usuario}' creado`);
         }
 
-        console.log("\n Se insertaron 5 usuarios correctamente");
+        console.log("\nSe insertaron 5 usuarios correctamente");
 
     } catch (err) {
-        console.error(" Error:", err);
+
+        console.error("Error:", err);
+
     } finally {
+
         await client.close();
     }
 }
