@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Login 2FA - Fase 4</title>
+</head>
+
+<body>
+
+<h1>Autenticación 2FA</h1>
+
+<!-- LOGIN -->
+<div id="loginSection">
+
+    <h2>Login</h2>
+
+    <input
+        id="usuario"
+        placeholder="Usuario"
+    >
+
+    <br><br>
+
+    <input
+        id="password"
+        type="password"
+        placeholder="Password"
+    >
+
+    <br><br>
+
+    <button onclick="login()">
+        Login
+    </button>
+
+</div>
+
+
+<!-- PIN -->
+<div
+    id="pinSection"
+    style="display:none;"
+>
+
+    <h2>PIN</h2>
+
+    <p>
+        Revisa tu Telegram.
+        Se envió un código de 4 dígitos.
+    </p>
+
+    <input
+        id="pin"
+        placeholder="PIN"
+        maxlength="4"
+    >
+
+    <br><br>
+
+    <button onclick="validar()">
+        Validar PIN
+    </button>
+
+</div>
+
+
+<!-- USUARIO AUTENTICADO -->
+<div
+    id="usuarioSection"
+    style="display:none;"
+>
+
+    <h2>Acceso concedido</h2>
+
+    <p>
+        Autenticación 2FA exitosa.
+    </p>
+
+    <button onclick="obtenerInformacion()">
+        Ver información del usuario
+    </button>
+
+    <br><br>
+
+    <div id="informacionUsuario"></div>
+
+    <br>
+
+    <button onclick="logout()">
+        Cerrar sesión
+    </button>
+
+</div>
+
+
+<br>
+
+<p id="resultado"></p>
+
+
+<script>
+
+let usuarioGlobal = "";
+let sessionToken = "";
+
+
+// ==========================================
+// LOGIN
+// ==========================================
+
+async function login() {
+
+    const usuario =
+        document.getElementById("usuario").value;
+
+    const password =
+        document.getElementById("password").value;
+
+
+    if (!usuario || !password) {
+
+        document.getElementById(
+            "resultado"
+        ).innerText =
+            "Ingresa usuario y contraseña";
+
+        return;
+    }
+
+
+    usuarioGlobal = usuario;
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/usuarios/valida-login",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            usuario: usuario,
+                            password: password
+                        })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        document.getElementById(
+            "resultado"
+        ).innerText =
+            data.msg;
+
+
+        if (data.valido === 1) {
+
+            document.getElementById(
+                "loginSection"
+            ).style.display =
+                "none";
+
+
+            document.getElementById(
+                "pinSection"
+            ).style.display =
+                "block";
+        }
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById(
+            "resultado"
+        ).innerText =
+            "Error al conectarse con el servidor";
+    }
+}
+
+
+// ==========================================
+// VALIDAR PIN
+// ==========================================
+
+async function validar() {
+
+    const pin =
+        document.getElementById(
+            "pin"
+        ).value;
+
+
+    if (!pin) {
+
+        document.getElementById(
+            "resultado"
+        ).innerText =
+            "Ingresa el PIN";
+
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/usuarios/validar-pin",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            usuario:
+                                usuarioGlobal,
+
+                            pin:
+                                pin
+                        })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        document.getElementById(
+            "resultado"
+        ).innerText =
+            data.msg;
+
+
+        if (data.acceso === 1) {
+
+            // Guardamos el token enviado por server.js
+            sessionToken =
+                data.sessionToken;
+
+
+            document.getElementById(
+                "pinSection"
+            ).style.display =
+                "none";
+
+
+            document.getElementById(
+                "usuarioSection"
+            ).style.display =
+                "block";
+        }
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById(
+            "resultado"
+        ).innerText =
+            "Error al validar el PIN";
+    }
+}
+
+
+// ==========================================
+// CONSULTAR INFORMACIÓN DEL USUARIO
+// ==========================================
+
+async function obtenerInformacion() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/user-info/" +
+                encodeURIComponent(
+                    usuarioGlobal
+                ),
+                {
+                    method: "GET",
+
+                    headers: {
+
+                        "Authorization":
+                            "Bearer " +
+                            sessionToken
+                    }
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (data.status === 1) {
+
+            document.getElementById(
+                "informacionUsuario"
+            ).innerHTML =
+
+                "<strong>Usuario:</strong> " +
+                data.usuario +
+
+                "<br>" +
+
+                "<strong>Nombre:</strong> " +
+                data.nombre +
+
+                "<br>" +
+
+                "<strong>Fecha de creación:</strong> " +
+                data.creado;
+
+        } else {
+
+            document.getElementById(
+                "informacionUsuario"
+            ).innerText =
+                data.msg;
+        }
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById(
+            "informacionUsuario"
+        ).innerText =
+            "Error al consultar información";
+    }
+}
+
+
+// ==========================================
+// CERRAR SESIÓN
+// ==========================================
+
+async function logout() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/logout",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            usuario:
+                                usuarioGlobal,
+
+                            sessionToken:
+                                sessionToken
+                        })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        document.getElementById(
+            "resultado"
+        ).innerText =
+            data.msg;
+
+
+        if (data.status === 1) {
+
+            usuarioGlobal = "";
+            sessionToken = "";
+
+
+            document.getElementById(
+                "usuario"
+            ).value = "";
+
+
+            document.getElementById(
+                "password"
+            ).value = "";
+
+
+            document.getElementById(
+                "pin"
+            ).value = "";
+
+
+            document.getElementById(
+                "informacionUsuario"
+            ).innerHTML = "";
+
+
+            document.getElementById(
+                "usuarioSection"
+            ).style.display =
+                "none";
+
+
+            document.getElementById(
+                "pinSection"
+            ).style.display =
+                "none";
+
+
+            document.getElementById(
+                "loginSection"
+            ).style.display =
+                "block";
+        }
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById(
+            "resultado"
+        ).innerText =
+            "Error al cerrar sesión";
+    }
+}
+
+</script>
+
+</body>
+</html>
